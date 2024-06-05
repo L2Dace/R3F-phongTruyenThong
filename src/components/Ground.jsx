@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 
 
