@@ -26,6 +26,7 @@ export const CharacterControl = () => {
     }));
   };
 
+  
   useEffect(() => {
     const handleKeyDown = (ev) => {
       setMovementStatus(moveFieldByKey(ev.code), true);
