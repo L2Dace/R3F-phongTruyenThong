@@ -1,12 +1,18 @@
 /* eslint-disable react/no-unknown-property */
 import * as THREE from "three";
 import * as RAPIER from "@dimforge/rapier3d-compat";
-import { CapsuleCollider, RigidBody, useRapier } from "@react-three/rapier";
+import {
+  CapsuleCollider,
+  RigidBody,
+  TrimeshCollider,
+  useRapier,
+} from "@react-three/rapier";
 import { useRef, useEffect, useState } from "react";
 import { CharacterControl } from "./CharacterControl";
 import { useFrame } from "@react-three/fiber";
 import { PointerLockControls, OrbitControls } from "@react-three/drei";
 import Gentleman from "./gentleman";
+import { AnimatedGirl } from "./AnimatedGirl";
 
 const MOVE_SPEED = 5;
 const direction = new THREE.Vector3();
@@ -21,12 +27,21 @@ export const Character = () => {
   const [cameraRotation, setCameraRotation] = useState(0);
   const controls = useRef();
 
+  const [isMoving, setIsMoving] = useState(false);
+  const [isJumping, setIsJumping] = useState(false);
+  const [shiftPressed, setShiftPressed] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+
   useEffect(() => {
+
     const handleKeyDown = (event) => {
-      if (event.code === "ControlLeft") {
+      if (event.code === "KeyV") {
         setCameraMode((prevMode) =>
           prevMode === "firstPerson" ? "thirdPerson" : "firstPerson"
         );
+      }
+      if (event.key === 'Shift') {
+        setShiftPressed(true);
       }
 
       // Handle arrow key events for camera rotation
@@ -38,11 +53,19 @@ export const Character = () => {
         }
       }
     };
+    const handleKeyUp = (event) => {
+      if (event.key === 'Shift') {
+        setShiftPressed(false);
+      }
+    };
 
+
+    window.addEventListener('keyup', handleKeyUp);
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, [cameraMode]);
 
@@ -93,6 +116,11 @@ export const Character = () => {
     };
   }, [controls]);
 
+  const doJump = () => {
+    characterRef.current.setLinvel({ x: 0, y: 6, z: 0 });
+    setIsJumping(true); 
+  };
+
   useFrame((state) => {
     if (!characterRef.current) return;
 
@@ -106,6 +134,7 @@ export const Character = () => {
       .normalize()
       .multiplyScalar(MOVE_SPEED)
       .applyEuler(state.camera.rotation);
+    characterRef.current.rotation.y = direction;
 
     characterRef.current.wakeUp();
     characterRef.current.setLinvel({
@@ -114,6 +143,20 @@ export const Character = () => {
       z: direction.z,
     });
 
+    // Check if character is moving
+    if (direction.length() > 0) {
+      setIsMoving(true);
+    } else {
+      setIsMoving(false);
+    }
+
+    // Update isRunning state
+    if (shiftPressed && isMoving) {
+      setIsRunning(true);
+    } else {
+      setIsRunning(false);
+    }
+
     // jump
     const world = rapier.world;
     const ray = world.castRay(
@@ -121,7 +164,12 @@ export const Character = () => {
     );
     const grounded = ray && ray.collider && Math.abs(ray.toi) <= 1.5;
 
-    if (jump && grounded) doJump();
+    if (jump && grounded){
+      doJump();
+      setIsJumping(false);
+    };
+
+    
 
     //di chuyen camera theo nhan vat
     // const {x,y,z} = characterRef.current.translation();
@@ -133,33 +181,34 @@ export const Character = () => {
       const { x, y, z } = characterRef.current.translation();
       state.camera.position.set(x, y, z);
       gentleman.current.quaternion.copy(state.camera.quaternion);
+
+      // const { x, y, z } = state.camera.rotation;
+      gentleman.current.rotation.set(0, y, 0);
     } else {
       controls.current.unlock();
       const { x, y, z } = characterRef.current.translation();
 
       // Calculate orbital camera position
-      const radius = 5; // Adjust this value to control the distance from the character
+      const radius = 3; // Adjust this value to control the distance from the character
       const angle = cameraRotation;
       const orbitX = x + radius * Math.sin(angle);
       const orbitZ = z + radius * Math.cos(angle);
-      const orbitY = y + 2; // Adjust this value to control the camera height
+      const orbitY = y + 1; // Adjust this value to control the camera height
 
       state.camera.position.set(orbitX, orbitY, orbitZ);
       state.camera.lookAt(x, y, z);
       state.camera.fov = 75;
 
       const directionVector = new THREE.Vector3(direction.x, 0, direction.z);
-    directionVector.normalize();
-    const yaw = Math.atan2(directionVector.x, directionVector.z);
-    const quaternion = new THREE.Quaternion();
-    quaternion.setFromEuler(new THREE.Euler(0, yaw, 0));
-    gentleman.current.quaternion.copy(quaternion);
+      directionVector.normalize();
+      const yaw = Math.atan2(directionVector.x, directionVector.z);
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromEuler(new THREE.Euler(0, yaw, 0));
+      // characterRef.current.quaternion.copy(quaternion);
+      gentleman.current.quaternion.copy(quaternion);
+      characterRef.current.rotation.y = yaw;
     }
   });
-
-  const doJump = () => {
-    characterRef.current.setLinvel({ x: 0, y: 6, z: 0 });
-  };
 
   const gentleman = useRef();
   return (
@@ -170,18 +219,23 @@ export const Character = () => {
         mass={1}
         ref={characterRef}
         lockRotations
-        scale={[0.5, 0.5, 0.5]}
+        scale={[1, 1, 1]}
       >
-        {/* <mesh >
-                <capsuleGeometry args={[0.5, 0.5]}/>
-                <CapsuleCollider args={[0.75, 0.5]}/>
-            </mesh> */}
-        <CapsuleCollider args={cameraMode === "firstPerson"? [1.8, 0.4] : [0.75, 0.4]} />
+        <CapsuleCollider
+          args={cameraMode === "firstPerson" ? [1.8, 0.4] : [0.75, 0.4]}
+        />
+
         <group ref={gentleman}>
-          <Gentleman position={cameraMode === "firstPerson"? [0, 1.2, 0] : [0, -1.0, 0]} />
+          {cameraMode === "thirdPerson" && (
+            <AnimatedGirl
+              isMoving={isMoving}
+              isJumping={isJumping}
+              isRunning={isRunning}
+              //position={cameraMode === "firstPerson" ? [0, 1.2, 0] : [0, -1.0, 0]}
+            />
+          )}
         </group>
       </RigidBody>
-
     </group>
   );
 };
