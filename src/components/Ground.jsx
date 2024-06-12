@@ -19,7 +19,7 @@ export const Ground = () => {
         </mesh> */}
         
         <Gltf castShadow receiveShadow scale={[0.75,0.75,0.75]} position={[0, 0, -2]} rotation-y={-Math.PI} src="models/Phongtruyenthong.glb"/>
-        <CuboidCollider args={[500, 2, 500]} position={[0, -2, 0]} />
+        <CuboidCollider args={[1000, 2, 1000]} position={[0, -2, 0]} />
         
         
         </RigidBody>

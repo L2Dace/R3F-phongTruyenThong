@@ -17,3 +17,12 @@ html, body, #root, #container {
   border: 2px solid white;
   z-index: 2;
 }
+.content {
+  padding-top: 10px;
+  transform: translate3d(calc(50% + 40px), 0, 0);
+  text-align: left;
+  background: #202035;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+}
