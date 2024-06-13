@@ -7,6 +7,7 @@ import { Character } from "./components/Character.jsx";
 import { useState, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { Outlines } from "@react-three/drei";
 import {
   Selection,
   Select,
@@ -22,7 +23,6 @@ function Box(props) {
   const [clicked, click] = useState(false);
 
   return (
-    <Select enabled={hovered}>
       <mesh
         {...props}
         ref={ref}
@@ -32,13 +32,16 @@ function Box(props) {
         onPointerOut={(event) => hover(false)}
       >
         <sphereGeometry args={[0.1, 64, 64]} />
-        <meshStandardMaterial color={hovered ? "pink" : "orange"} />
+        <meshStandardMaterial color={hovered ? "orange" : "orange"} />
         {hovered && (
+          <>
+          <Outlines thickness={0.02} color="#ffffff" />
           <Html position={[-1, -0.2, 0]}>
             <div class="content">
               <p>Press B to show information</p>
             </div>
           </Html>
+          </>
         )}
         {clicked && (
           <Billboard position={[0, 0, 2]} args={[3, 3]}>
@@ -57,7 +60,6 @@ function Box(props) {
           </Billboard>
         )}
       </mesh>
-    </Select>
   );
 }
 
@@ -66,22 +68,13 @@ export const App = () => {
     <>
       {/* <PointerLockControls/> */}
       <Sky sunPosition={[100, 20, 100]} />
+      <Environment preset="sunset" />
       <ambientLight intensity={1.5} />
       <Physics gravity={[0, -20, 0]}>
         <Ground />
         <Character />
       </Physics>
-      <Selection>
-        <EffectComposer multisampling={0}>
-          <Outline
-            blur
-            visibleEdgeColor="white"
-            edgeStrength={100}
-            width={1000}
-          />
-        </EffectComposer>
         <Box position={[0, 2, -9]} />
-      </Selection>
     </>
   );
 };
