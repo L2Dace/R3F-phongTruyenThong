@@ -1,48 +1,67 @@
 /* eslint-disable react/no-unknown-property */
 // import { PointerLockControls, Sky } from "@react-three/drei";
-import { Environment, Sky, Html } from "@react-three/drei";
+import { Environment, Sky, Html, Billboard, Text, Plane } from "@react-three/drei";
 import { Ground } from "./components/Ground.jsx";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Character } from "./components/Character.jsx";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import {
+  Selection,
+  Select,
+  EffectComposer,
+  Outline,
+} from "@react-three/postprocessing";
 
 function Box(props) {
   // This reference gives us direct access to the THREE.Mesh object
-  const ref = useRef()
+  const ref = useRef();
   // Hold state for hovered and clicked events
-  const [hovered, hover] = useState(false)
-  const [clicked, click] = useState(false)
-  // Subscribe this component to the render-loop, rotate the mesh every frame
-  // useFrame((state, delta) => (ref.current.rotation.x += delta))
-  // Return the view, these are regular Threejs elements expressed in JSX
+  const [hovered, hover] = useState(false);
+  const [clicked, click] = useState(false);
+
   return (
-    <RigidBody>
-    <mesh
-      {...props}
-      ref={ref}
-      scale={clicked ? 1.5 : 1}
-      onClick={(event) => click(!clicked)}
-      onPointerOver={(event) => (event.stopPropagation(), hover(true))}
-      onPointerOut={(event) => hover(false)}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-      {clicked && (
-          <Html distanceFactor={10} position={[0,2,0]}>
-          <div class="content">
-          Subscribe this component to the render-loop, rotate the mesh every frame
-  useFramestate, delta ref.current.rotation.x += delta
- Return the view, these are regular Threejs elements expressed in JSX
-          </div>
-        </Html>
-      )}
-    </mesh>
-    </RigidBody>
-  )
+    <Select enabled={hovered}>
+      <mesh
+        {...props}
+        ref={ref}
+        // scale={clicked ? 1.5 : 1}
+        onClick={(event) => click(!clicked)}
+        onPointerOver={(event) => (event.stopPropagation(), hover(true))}
+        onPointerOut={(event) => hover(false)}
+      >
+        <sphereGeometry args={[0.1, 64, 64]} />
+        <meshStandardMaterial color={hovered ? "pink" : "orange"} />
+        {hovered && (
+          <Html position={[-1, -0.2, 0]}>
+            <div class="content">
+              <p>Press B to show information</p>
+            </div>
+          </Html>
+        )}
+        {clicked && (
+          <Billboard position={[0, 0, 2]} args={[3, 3]}>
+            <Plane args={[5, 4]} material-color="gray" />
+            <Text
+              fontSize={0.3}
+              outlineColor="#000000"
+              outlineOpacity={1}
+              outlineWidth="5%"
+              color="black" // default
+              anchorX="center" // defaults
+              anchorY="middle" // default
+            >
+              Hello world!
+            </Text>
+          </Billboard>
+        )}
+      </mesh>
+    </Select>
+  );
 }
 
 export const App = () => {
-
   return (
     <>
       {/* <PointerLockControls/> */}
@@ -51,8 +70,18 @@ export const App = () => {
       <Physics gravity={[0, -20, 0]}>
         <Ground />
         <Character />
-        <Box />
       </Physics>
+      <Selection>
+        <EffectComposer multisampling={0}>
+          <Outline
+            blur
+            visibleEdgeColor="white"
+            edgeStrength={100}
+            width={1000}
+          />
+        </EffectComposer>
+        <Box position={[0, 2, -9]} />
+      </Selection>
     </>
   );
 };

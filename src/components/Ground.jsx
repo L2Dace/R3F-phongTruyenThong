@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import {ContactShadows, Environment, Gltf} from '@react-three/drei';
+import { PTTRoom } from "./PTTRoom";
 
 
 
@@ -19,6 +20,7 @@ export const Ground = () => {
         </mesh> */}
         
         <Gltf castShadow receiveShadow scale={[0.75,0.75,0.75]} position={[0, 0, -2]} rotation-y={-Math.PI} src="models/Phongtruyenthong.glb"/>
+        {/* <PTTRoom castShadow receiveShadow scale={[0.75,0.75,0.75]} position={[0, 0, -2]} rotation-y={-Math.PI}/> */}
         <CuboidCollider args={[1000, 2, 1000]} position={[0, -2, 0]} />
         
         
